@@ -1,5 +1,10 @@
-from flask import Flask, render_template
-from flask import request, redirect, jsonify, url_for, flash
+from flask import (Flask,
+                   render_template,
+                   request,
+                   redirect,
+                   jsonify,
+                   url_for,
+                   flash)
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from jewel_db import Base, User, Jewellery, JewelItem
@@ -262,19 +267,26 @@ def editJewellery(jewel_id):
         redirect('/login')
     editedRestaurant = session.query(
         Jewellery).filter_by(id=jewel_id).one()
-    if request.method == 'POST':
-        if request.form['name']:
-            editedRestaurant.name = request.form['name']
-            flash('Jewellery Successfully Edited %s' % editedRestaurant.name)
-            print(editedRestaurant.name)
-            session.add(editedRestaurant)
-            session.commit()
-            return redirect(url_for('showJewellery'))
+    if editedRestaurant == login_session['user_id']:
+        if request.method == 'POST':
+            if request.form['name']:
+                editedRestaurant.name = request.form['name']
+                flash('Jewellery Successfully Edited %s' % editedRestaurant.name)
+                print(editedRestaurant.name)
+                session.add(editedRestaurant)
+                session.commit()
+                return redirect(url_for('showJewellery'))
+        else:
+            return render_template('editJewellery.html',
+                                jewellery=editedRestaurant)
     else:
-        return render_template('editJewellery.html', jewellery=editedRestaurant)
+        flash('no permission')
+        return redirect(url_for('showJewellery'))
     session.close()
 
 # Delete a jewellery
+
+
 @app.route('/jewellery/<int:jewel_id>/delete/', methods=['GET', 'POST'])
 def deleteJewellery(jewel_id):
     session = DBSession()
@@ -282,13 +294,18 @@ def deleteJewellery(jewel_id):
         return redirect('/login')
     restaurantToDelete = session.query(
         Jewellery).filter_by(id=jewel_id).one()
-    if request.method == 'POST':
-        session.delete(restaurantToDelete)
-        flash('%s Successfully Deleted' % restaurantToDelete.name)
-        session.commit()
-        return redirect(url_for('showJewellery', jewel_id=jewel_id))
+    if restaurantToDelete == login_session['user_id']:
+        if request.method == 'POST':
+            session.delete(restaurantToDelete)
+            flash('%s Successfully Deleted' % restaurantToDelete.name)
+            session.commit()
+            return redirect(url_for('showJewellery', jewel_id=jewel_id))
+        else:
+            return render_template('deleteJewellery.html',
+                                jewellery=restaurantToDelete)
     else:
-        return render_template('deleteJewellery.html', jewellery=restaurantToDelete)
+        flash('No permission!')
+        return redirect(url_for('showJewellery'))
     session.close()
 # Show a jewellery menu
 
@@ -301,29 +318,36 @@ def showMenu(jewel_id):
     items = session.query(JewelItem).filter_by(
         jewel_id=jewel_id).all()
     return render_template('menu.html', items=items, jewellery=jewellery)
-    session.close()
 
 # Create a new menu item
+
+
 @app.route('/jewellery/<int:jewel_id>/menu/new/', methods=['GET', 'POST'])
 def newMenuItem(jewel_id):
     session = DBSession()
     if 'username' not in login_session:
         return redirect('/login')
     jewellery = session.query(Jewellery).filter_by(id=jewel_id).one()
-    if request.method == 'POST':
-        newItem = JewelItem(name=request.form['name'], description=request.form['description'], price=request.form[
-                           'price'], jewel_id=jewel_id, user_id=jewellery.user_id)
-        session.add(newItem)
-        session.commit()
-        flash('New Menu %s Item Successfully Created' % (newItem.name))
-        return redirect(url_for('showMenu', jewel_id=jewel_id))
+    if jewellery == login_session['user_id']:
+        if request.method == 'POST':
+            newItem = JewelItem(name=request.form['name'],
+                                description=request.form['description'],
+                                price=request.form['price'],
+                                jewel_id=jewel_id, user_id=jewellery.user_id)
+            session.add(newItem)
+            session.commit()
+            flash('New Menu %s Item Successfully Created' % (newItem.name))
+            return redirect(url_for('showMenu', jewel_id=jewel_id))
+        else:
+            return render_template('newmenuitem.html', jewel_id=jewel_id)
     else:
-        return render_template('newmenuitem.html', jewel_id=jewel_id)
-    session.close()
+        flash('No permision!!')
+        return redirect(url_for('showJewellery'))
 # Edit a menu item
 
 
-@app.route('/jewellery/<int:jewel_id>/menu/<int:menu_id>/edit', methods=['GET', 'POST'])
+@app.route('/jewellery/<int:jewel_id>/menu/<int:menu_id>/edit',
+           methods=['GET', 'POST'])
 def editMenuItem(jewel_id, menu_id):
     session = DBSession()
     if 'username' not in login_session:
@@ -343,11 +367,13 @@ def editMenuItem(jewel_id, menu_id):
         flash('Menu Item Successfully Edited')
         return redirect(url_for('showMenu', jewel_id=jewel_id))
     else:
-        return render_template('editmenuitem.html', jewel_id=jewel_id, menu_id=menu_id, item=editedItem)
-    
+        return render_template('editmenuitem.html', jewel_id=jewel_id,
+                               menu_id=menu_id, item=editedItem)
+
 
 # Delete a menu item
-@app.route('/jewellery/<int:jewel_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
+@app.route('/jewellery/<int:jewel_id>/menu/<int:menu_id>/delete',
+           methods=['GET', 'POST'])
 def deleteMenuItem(jewel_id, menu_id):
     session = DBSession()
     if 'username' not in login_session:
