@@ -22,7 +22,7 @@ class Jewellery(Base):
     name = Column(String(250), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
-
+    jewel_item = relationship('JewelItem', cascade='all, delete-orphan')
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -52,7 +52,6 @@ class JewelItem(Base):
             'description': self.description,
             'id': self.id,
             'price': self.price,
-            'course': self.course,
         }
 
 
