@@ -2,29 +2,13 @@
 
 <head>
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='jewellerystyle.css') }}">
-<script>
-    function login()
-    {
-        var a=document.getElementsByName("login")
-        if(a)
-        {
-            window.location="/login";
-        }
-    }
-    function logout()
-    {
-        var a=document.getElementsByName("logout")
-        if(a)
-        {
-            window.location="/login";
-        }
-    }
-</script>
 	</head>
-
-
+{%if 'username' not in session %}
+    <a href="{{ url_for('showLogin') }}">Login</a>
+{% else %}
+<a href="{{ url_for('gdisconnect') }}">Logout</a>
+{% endif %}
 <body>
-<button onclick="login()" name="login" class="login">Login</button>
 <div class = 'pane'>
 <h1>Jewels</h1>
 
@@ -45,7 +29,6 @@
 
 {% endfor %}
 </div>
-<button onclick="logout()" name="logout" class="logout">Logout</button>
 </body>
 
 </html>
